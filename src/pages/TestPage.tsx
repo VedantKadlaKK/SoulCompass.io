@@ -8,9 +8,11 @@ import { useTestContext } from "@/context/TestContext";
 import { Answer } from "@/types";
 import { Button } from "@/components/ui/button";
 import { ChevronLeft, ChevronRight } from "lucide-react";
+import { useToast } from "@/hooks/use-toast";
 
 const TestPage = () => {
   const navigate = useNavigate();
+  const { toast } = useToast();
   const { testType } = useParams<{ testType: string }>();
   const {
     currentTest,
@@ -64,7 +66,7 @@ const TestPage = () => {
     if (currentQuestionIndex < questions.length - 1) {
       setCurrentQuestionIndex(currentQuestionIndex + 1);
     } else if (isCurrentTestComplete) {
-      // Navigate to next test or results page
+      // Navigate to next test or results page based on current test
       if (currentTest === "personality") {
         navigate("/test/mental-health");
       } else if (currentTest === "mentalHealth") {
@@ -72,6 +74,31 @@ const TestPage = () => {
       } else if (currentTest === "career") {
         navigate("/results");
       }
+    } else {
+      // If at last question but not all questions are answered
+      toast({
+        title: "Please complete all questions",
+        description: "Make sure to answer all questions before proceeding.",
+        variant: "destructive",
+      });
+    }
+  };
+  
+  const handleCompleteTest = () => {
+    if (isCurrentTestComplete) {
+      if (currentTest === "personality") {
+        navigate("/test/mental-health");
+      } else if (currentTest === "mentalHealth") {
+        navigate("/test/career");
+      } else if (currentTest === "career") {
+        navigate("/results");
+      }
+    } else {
+      toast({
+        title: "Test Incomplete",
+        description: "Please answer all questions before proceeding.",
+        variant: "destructive",
+      });
     }
   };
   
@@ -138,23 +165,25 @@ const TestPage = () => {
               Question {currentQuestionIndex + 1} of {questions.length}
             </div>
             
-            <Button
-              onClick={handleNext}
-              disabled={!currentAnswer}
-              className="flex items-center bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700"
-            >
-              {currentQuestionIndex < questions.length - 1 ? (
-                <>
-                  Next
-                  <ChevronRight className="ml-2 h-4 w-4" />
-                </>
-              ) : (
-                <>
-                  {currentTest === "career" ? "View Results" : "Next Assessment"}
-                  <ChevronRight className="ml-2 h-4 w-4" />
-                </>
-              )}
-            </Button>
+            {currentQuestionIndex < questions.length - 1 ? (
+              <Button
+                onClick={handleNext}
+                disabled={!currentAnswer}
+                className="flex items-center bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700"
+              >
+                Next
+                <ChevronRight className="ml-2 h-4 w-4" />
+              </Button>
+            ) : (
+              <Button
+                onClick={handleCompleteTest}
+                disabled={!isCurrentTestComplete}
+                className="flex items-center bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700"
+              >
+                {currentTest === "career" ? "View Results" : "Next Assessment"}
+                <ChevronRight className="ml-2 h-4 w-4" />
+              </Button>
+            )}
           </div>
         </div>
       </div>
