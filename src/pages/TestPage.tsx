@@ -46,7 +46,7 @@ const TestPage = () => {
   const currentAnswer = answers.find(a => a.questionId === currentQuestion?.id) || null;
   
   // Check if all questions in current test are answered
-  const isCurrentTestComplete = questions.every(q => 
+  const allQuestionsAnswered = questions.every(q => 
     answers.some(a => a.questionId === q.id)
   );
   
@@ -65,8 +65,7 @@ const TestPage = () => {
   const handleNext = () => {
     if (currentQuestionIndex < questions.length - 1) {
       setCurrentQuestionIndex(currentQuestionIndex + 1);
-    } else if (isCurrentTestComplete) {
-      // Navigate to next test or results page based on current test
+    } else if (allQuestionsAnswered) {
       if (currentTest === "personality") {
         navigate("/test/mental-health");
       } else if (currentTest === "mentalHealth") {
@@ -75,7 +74,6 @@ const TestPage = () => {
         navigate("/results");
       }
     } else {
-      // If at last question but not all questions are answered
       toast({
         title: "Please complete all questions",
         description: "Make sure to answer all questions before proceeding.",
@@ -85,7 +83,7 @@ const TestPage = () => {
   };
   
   const handleCompleteTest = () => {
-    if (isCurrentTestComplete) {
+    if (allQuestionsAnswered) {
       if (currentTest === "personality") {
         navigate("/test/mental-health");
       } else if (currentTest === "mentalHealth") {
@@ -118,6 +116,18 @@ const TestPage = () => {
   
   const stepNames = ["Personality", "Mental Well-being", "Career"];
   const currentStep = currentTest === "personality" ? 0 : currentTest === "mentalHealth" ? 1 : 2;
+  
+  // Early return if questions are not loaded
+  if (questions.length === 0) {
+    return (
+      <Layout>
+        <div className="container mx-auto px-4 py-12 text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-700 mx-auto"></div>
+          <p className="mt-4 text-gray-600">Loading assessment...</p>
+        </div>
+      </Layout>
+    );
+  }
   
   return (
     <Layout>
@@ -177,7 +187,7 @@ const TestPage = () => {
             ) : (
               <Button
                 onClick={handleCompleteTest}
-                disabled={!isCurrentTestComplete}
+                disabled={!allQuestionsAnswered && currentAnswer === null}
                 className="flex items-center bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700"
               >
                 {currentTest === "career" ? "View Results" : "Next Assessment"}
