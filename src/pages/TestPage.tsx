@@ -35,6 +35,7 @@ const TestPage = () => {
     } else {
       navigate("/tests");
     }
+    setCurrentQuestionIndex(0); // Reset question index when test changes
   }, [testType, setCurrentTest, navigate]);
   
   // Get questions and answers for current test
@@ -44,12 +45,15 @@ const TestPage = () => {
   // Get current question and answer
   const currentQuestion = questions[currentQuestionIndex];
   const currentAnswer = answers.find(a => a.questionId === currentQuestion?.id) || null;
-  
+
   // Check if all questions in current test are answered
-  const allQuestionsAnswered = questions.every(q => 
+  const allQuestionsAnswered = questions.length > 0 && questions.every(q => 
     answers.some(a => a.questionId === q.id)
   );
   
+  // Enable Next button only if current question is answered
+  const isNextEnabled = currentAnswer !== null;
+
   // Handle answer change
   const handleAnswerChange = (answer: Answer) => {
     updateAnswer(answer);
@@ -62,17 +66,24 @@ const TestPage = () => {
     }
   };
   
+  const navigateNextTestOrResults = () => {
+    if (currentTest === "personality") {
+      navigate("/test/mental-health");
+    } else if (currentTest === "mentalHealth") {
+      navigate("/test/career");
+    } else if (currentTest === "career") {
+      navigate("/results");
+    }
+  };
+
   const handleNext = () => {
+    // If not on last question, go to next question
     if (currentQuestionIndex < questions.length - 1) {
       setCurrentQuestionIndex(currentQuestionIndex + 1);
-    } else if (allQuestionsAnswered) {
-      if (currentTest === "personality") {
-        navigate("/test/mental-health");
-      } else if (currentTest === "mentalHealth") {
-        navigate("/test/career");
-      } else if (currentTest === "career") {
-        navigate("/results");
-      }
+    }
+    // If on last question and all answered, proceed to next test/results
+    else if (allQuestionsAnswered) {
+      navigateNextTestOrResults();
     } else {
       toast({
         title: "Please complete all questions",
@@ -84,17 +95,11 @@ const TestPage = () => {
   
   const handleCompleteTest = () => {
     if (allQuestionsAnswered) {
-      if (currentTest === "personality") {
-        navigate("/test/mental-health");
-      } else if (currentTest === "mentalHealth") {
-        navigate("/test/career");
-      } else if (currentTest === "career") {
-        navigate("/results");
-      }
+      navigateNextTestOrResults();
     } else {
       toast({
         title: "Test Incomplete",
-        description: "Please answer all questions before proceeding.",
+        description: "Please answer all questions to proceed.",
         variant: "destructive",
       });
     }
@@ -178,7 +183,7 @@ const TestPage = () => {
             {currentQuestionIndex < questions.length - 1 ? (
               <Button
                 onClick={handleNext}
-                disabled={!currentAnswer}
+                disabled={!isNextEnabled}
                 className="flex items-center bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700"
               >
                 Next
@@ -187,7 +192,7 @@ const TestPage = () => {
             ) : (
               <Button
                 onClick={handleCompleteTest}
-                disabled={!allQuestionsAnswered && currentAnswer === null}
+                disabled={!allQuestionsAnswered}
                 className="flex items-center bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700"
               >
                 {currentTest === "career" ? "View Results" : "Next Assessment"}
@@ -202,3 +207,4 @@ const TestPage = () => {
 };
 
 export default TestPage;
+
